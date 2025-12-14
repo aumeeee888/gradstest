@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TAPIOCA RUSH - Visual Order</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            background-color: #f0fdf4; /* Mint green bg */
+            color: #2d3436;
+        }
+        .app-container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .visual-area {
+            background-color: #FFFDF5;
+            border-bottom: 4px solid #4ECDC4;
+            padding: 20px;
+            text-align: center;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Customer Face Styling */
+        .customer-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            border: 3px solid white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+            z-index: 10;
+            background: #eee;
+            color: #555;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .customer-enter {
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn {
+            0% { transform: scale(0) translateY(50px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        .bubble {
+            background: white;
+            border: 2px solid #2d3436;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 20px;
+            position: relative;
+            box-shadow: 3px 3px 0 #FF6B6B;
+            z-index: 5;
+            min-width: auto;
+            display: inline-block;
+        }
+        .bubble::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 0 10px 10px;
+            border-style: solid;
+            border-color: transparent transparent #2d3436;
+            display: block;
+            width: 0;
+        }
+        .bubble::before {
+            content: '';
+            position: absolute;
+            top: -7px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 0 8px 8px;
+            border-style: solid;
+            border-color: transparent transparent white;
+            display: block;
+            width: 0;
+            z-index: 1;
+        }
+
+        .controls {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 18px;
+            border: 2px solid #2d3436;
+            box-shadow: 4px 4px 0 #2d3436;
+            transition: transform 0.1s, box-shadow 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+        .btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 #2d3436;
+        }
+        .btn-main { background: #FF6B6B; color: white; border-color: #c0392b; }
+        .btn-sub { background: #FFE66D; color: #2d3436; border-color: #d4ac0d; }
+        .btn-listen { background: #4ECDC4; color: white; border-color: #2e86de; }
+
+        .listening {
+            animation: pulse 1.5s infinite;
+            background: #ff4757 !important;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 71, 87, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); }
+        }
+
+        /* Result Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            width: 100%;
+            max-width: 350px;
+            border: 4px solid #FF6B6B;
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
+        }
+        .big-kanji {
+            font-size: 48px;
+            font-weight: bold;
+            color: #2d3436;
+            margin: 10px 0;
+        }
+        .big-kana {
+            font-size: 24px;
+            color: #FF6B6B;
+            font-weight: bold;
+        }
+        
+        /* Reward Tag Styles */
+        .reward-tag {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #e74c3c;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            transform: rotate(10deg);
+            border: 2px solid white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            z-index: 15;
+        }
+        .reward-tag::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: -6px;
+            transform: translateY(-50%);
+            width: 10px;
+            height: 10px;
+            background: white;
+            border-radius: 50%;
+        }
+        
+        .earned-text {
+            color: #e67e22;
+            font-size: 32px;
+            font-weight: 900;
+            margin-top: 10px;
+            text-shadow: 2px 2px 0 #fff;
+            animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0); opacity: 0; }
+            60% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- Visual Area -->
+    <div class="visual-area">
+        <!-- Reward Tag based on difficulty -->
+        <div id="rewardTag" class="reward-tag hidden">
+            Reward: $30
+        </div>
+
+        <!-- Customer Face -->
+        <div id="customerAvatar" class="customer-avatar">
+            <i class="fa-solid fa-store"></i>
+        </div>
+
+        <div id="customerBubble" class="bubble">これください！</div>
+        
+        <!-- Icons representing the order -->
+        <div id="visualIcons" class="flex gap-4 items-center justify-center mb-6 flex-wrap w-full px-4">
+            <!-- Icons will appear here -->
+        </div>
+        
+        <p id="statusText" class="text-sm text-gray-400 mt-auto">NEXTボタンで注文開始</p>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+        <button id="nextBtn" class="btn btn-sub">
+            <i class="fa-solid fa-bell"></i> 次のお客さん
+        </button>
+
+        <div class="grid grid-cols-2 gap-3">
+            <button id="replayBtn" class="btn bg-white" disabled>
+                <i class="fa-solid fa-rotate-left"></i> もう一度聞く
+            </button>
+            <button id="modelBtn" class="btn bg-white" disabled>
+                <i class="fa-solid fa-graduation-cap"></i> お手本
+            </button>
+        </div>
+
+        <button id="micBtn" class="btn btn-main py-6" disabled>
+            <i class="fa-solid fa-microphone-lines text-2xl"></i>
+            <span>読み上げて提供！</span>
+        </button>
+    </div>
+</div>
+
+<!-- Result Modal -->
+<div id="resultModal" class="modal">
+    <div class="modal-content">
+        <div id="resultIcon" class="text-6xl mb-4 text-green-500">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <h2 id="resultTitle" class="text-2xl font-bold mb-0">通じました！</h2>
+        <div id="earnedDisplay" class="earned-text">+$30 GET!</div>
+        
+        <div class="bg-yellow-50 p-4 rounded-lg border-2 border-yellow-200 mb-4 mt-4">
+            <div id="ansImage" class="text-4xl mb-2 text-gray-700 flex justify-center gap-2"></div>
+            <div id="ansKanji" class="big-kanji"></div>
+            <div id="ansKana" class="big-kana"></div>
+        </div>
+
+        <button id="closeModalBtn" class="btn btn-listen">
+            次の注文へ
+        </button>
+    </div>
+</div>
+
+<script>
+    // Data: Menu Items
+    const MENU = [
+        { id: 'tea', kanji: '紅茶', kana: 'ホンチャ', image: '<i class="fa-solid fa-mug-hot" style="color:#e74c3c;"></i>' },
+        { id: 'green', kanji: '綠茶', kana: 'リュチャ', image: '<i class="fa-solid fa-leaf" style="color:#2ecc71;"></i>' },
+        { id: 'milk', kanji: '奶茶', kana: 'ナイチャ', image: '<i class="fa-solid fa-cow" style="color:#95a5a6;"></i>' },
+        { id: 'tapioca', kanji: '珍珠', kana: 'ジェンジュー', image: '<i class="fa-solid fa-circle-dot" style="color:#2d3436;"></i>' },
+        { id: 'half', kanji: '半糖', kana: 'バンタン', image: '<i class="fa-solid fa-cube" style="color:#fdcb6e;"></i><span class="text-xs">1/2</span>' },
+        { id: 'noice', kanji: '去冰', kana: 'チュービン', image: '<i class="fa-solid fa-ban text-red-500"></i><i class="fa-regular fa-snowflake text-blue-300"></i>' },
+    ];
+
+    // Combinations for orders with Prices based on difficulty
+    const ORDERS = [
+        { items: [0], text: "紅茶", price: 30 },
+        { items: [1], text: "綠茶", price: 30 },
+        { items: [2], text: "奶茶", price: 40 },
+        { items: [3, 2], text: "珍珠奶茶", price: 50 },
+        { items: [0, 4], text: "紅茶 半糖", price: 50 },
+        { items: [1, 5], text: "綠茶 去冰", price: 50 },
+        { items: [3, 2, 4, 5], text: "珍珠奶茶 半糖 去冰", price: 80 }
+    ];
+
+    // Customer Types (Face Icons)
+    const CUSTOMERS = [
+        { icon: 'fa-user-tie', color: '#2c3e50', bg: '#ecf0f1' }, // Salaryman
+        { icon: 'fa-user-graduate', color: '#8e44ad', bg: '#f3e5f5' }, // Student
+        { icon: 'fa-user-nurse', color: '#e74c3c', bg: '#fadbd8' }, // Nurse
+        { icon: 'fa-child-reaching', color: '#f1c40f', bg: '#fef9e7' }, // Kid
+        { icon: 'fa-user-ninja', color: '#34495e', bg: '#d6dbdf' }, // Ninja
+        { icon: 'fa-person-biking', color: '#27ae60', bg: '#d5f5e3' }, // Biker
+        { icon: 'fa-user-astronaut', color: '#e67e22', bg: '#fdebd0' } // Astronaut
+    ];
+
+    let currentOrder = null;
+    let isListening = false;
+
+    // Speech Setup
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = 'zh-TW';
+    recognition.interimResults = false;
+    const synth = window.speechSynthesis;
+
+    // DOM Elements
+    const customerAvatar = document.getElementById('customerAvatar');
+    const visualIcons = document.getElementById('visualIcons');
+    const customerBubble = document.getElementById('customerBubble');
+    const statusText = document.getElementById('statusText');
+    const nextBtn = document.getElementById('nextBtn');
+    const replayBtn = document.getElementById('replayBtn');
+    const modelBtn = document.getElementById('modelBtn');
+    const micBtn = document.getElementById('micBtn');
+    
+    // UI Update Elements
+    const rewardTag = document.getElementById('rewardTag');
+    const earnedDisplay = document.getElementById('earnedDisplay');
+    
+    // Modal DOM
+    const modal = document.getElementById('resultModal');
+    const ansKanji = document.getElementById('ansKanji');
+    const ansKana = document.getElementById('ansKana');
+    const ansImage = document.getElementById('ansImage');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+
+    // TTS Function
+    function speak(text, rate = 1.0) {
+        if (synth.speaking) synth.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'zh-TW';
+        utter.rate = rate;
+        synth.speak(utter);
+    }
+
+    // Logic
+    function setOrder() {
+        // Random Customer
+        const cust = CUSTOMERS[Math.floor(Math.random() * CUSTOMERS.length)];
+        customerAvatar.innerHTML = `<i class="fa-solid ${cust.icon}"></i>`;
+        customerAvatar.style.backgroundColor = cust.bg;
+        customerAvatar.style.color = cust.color;
+        
+        // Add animation class to re-trigger pop effect
+        customerAvatar.classList.remove('customer-enter');
+        void customerAvatar.offsetWidth; // trigger reflow
+        customerAvatar.classList.add('customer-enter');
+
+        // Random Order
+        const orderIdx = Math.floor(Math.random() * ORDERS.length);
+        const orderData = ORDERS[orderIdx];
+        
+        // Build visual HTML
+        let iconsHtml = "";
+        let kanjiFull = "";
+        let kanaFull = "";
+        
+        orderData.items.forEach(idx => {
+            const item = MENU[idx];
+            // アイコンサイズを text-[6rem] (約96px) に調整
+            iconsHtml += `<div class="flex flex-col items-center justify-center transform hover:scale-110 transition-transform text-[6rem] leading-none" style="min-width: 100px;">${item.image}</div>`;
+        });
+        
+        orderData.items.forEach(idx => {
+             kanjiFull += MENU[idx].kanji + " ";
+             kanaFull += MENU[idx].kana + " ";
+        });
+
+        currentOrder = {
+            rawText: orderData.text, 
+            displayKanji: kanjiFull.trim(),
+            displayKana: kanaFull.trim(),
+            visuals: iconsHtml,
+            price: orderData.price
+        };
+
+        // Update UI
+        visualIcons.innerHTML = currentOrder.visuals;
+        customerBubble.innerText = "これください！(音声再生中)";
+        statusText.innerText = "";
+        
+        // Show Reward Tag
+        rewardTag.innerText = `Reward: $${currentOrder.price}`;
+        rewardTag.classList.remove('hidden');
+        
+        // Enable buttons
+        micBtn.disabled = false;
+        replayBtn.disabled = false;
+        modelBtn.disabled = false;
+        
+        // Play Voice automatically
+        speak(currentOrder.rawText, 1.2); 
+    }
+
+    // Event Listeners
+    nextBtn.addEventListener('click', setOrder);
+
+    replayBtn.addEventListener('click', () => {
+        if(currentOrder) speak(currentOrder.rawText, 1.2);
+    });
+
+    modelBtn.addEventListener('click', () => {
+        if(currentOrder) speak(currentOrder.rawText, 0.7); 
+    });
+
+    micBtn.addEventListener('click', () => {
+        if (!isListening) {
+            try {
+                recognition.start();
+                isListening = true;
+                micBtn.classList.add('listening');
+                micBtn.innerHTML = '<i class="fa-solid fa-ear-listen"></i> 聞いています...';
+            } catch(e) {
+                alert("マイクの使用を許可してください");
+            }
+        }
+    });
+
+    recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        showResult(transcript);
+    };
+
+    recognition.onend = () => {
+        isListening = false;
+        micBtn.classList.remove('listening');
+        micBtn.innerHTML = '<i class="fa-solid fa-microphone-lines text-2xl"></i><span>読み上げて提供！</span>';
+    };
+
+    function showResult(spokenText) {
+        modal.style.display = 'flex';
+        ansKanji.innerText = currentOrder.displayKanji;
+        ansKana.innerText = currentOrder.displayKana;
+        ansImage.innerHTML = currentOrder.visuals;
+        earnedDisplay.innerText = `+$${currentOrder.price} GET!`;
+        
+        document.getElementById('resultTitle').innerText = `あなたの発音: 「${spokenText}」`;
+    }
+
+    closeModalBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+        setOrder(); 
+    });
+
+</script>
+</body>
+</html>
