@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TAPIOCA RUSH - Dual Mode</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            background-color: #f0fdf4;
+            color: #2d3436;
+            overflow: hidden;
+        }
+        .app-wrapper {
+            width: 100vw;
+            height: 100vh;
+            background: #FFFDF5;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Header */
+        .header {
+            height: 50px;
+            background: #2d3436;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+            z-index: 50;
+        }
+
+        /* Main Stage */
+        .stage {
+            flex-grow: 1;
+            display: flex;
+            position: relative;
+        }
+        
+        /* Customer Lane */
+        .lane {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* justify-content: center;  Changed for button layout */
+            justify-content: space-between; 
+            padding: 20px 10px;
+            position: relative;
+            transition: background 0.3s;
+            border-right: 2px dashed #bdc3c7;
+        }
+        .lane:last-child {
+            border-right: none;
+        }
+        .lane.cleared {
+            background-color: #d1fae5;
+            opacity: 0.8;
+        }
+
+        /* Top area of lane (Customer & Order) */
+        .lane-top {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            flex-grow: 1;
+            justify-content: center;
+        }
+
+        /* Bottom area of lane (Buttons) */
+        .lane-bottom {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        /* Customer Avatar */
+        .customer-avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 45px;
+            border: 4px solid white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+            z-index: 10;
+            background: #eee;
+            color: #555;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .customer-enter { animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popIn { 
+            0% { transform: scale(0) translateY(50px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        /* Visual Icons Area */
+        .visual-container {
+            min-height: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        .order-icon {
+            font-size: 4.5rem;
+            line-height: 1;
+            filter: drop-shadow(3px 3px 0 rgba(0,0,0,0.1));
+            transition: transform 0.2s;
+        }
+        .order-icon:hover { transform: scale(1.1); }
+
+        /* Reward Tag */
+        .reward-tag {
+            background: #e74c3c;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 16px;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+
+        /* Action Buttons */
+        .btn-provide {
+            width: 80%;
+            padding: 15px;
+            background: #FF6B6B;
+            color: white;
+            border: 3px solid #c0392b;
+            border-radius: 15px;
+            font-weight: 900;
+            font-size: 20px;
+            box-shadow: 0 4px 0 #c0392b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.1s;
+        }
+        .btn-provide:active { transform: translateY(4px); box-shadow: 0 0 0 #c0392b; }
+        .btn-provide:disabled { background: #95a5a6; border-color: #7f8c8d; box-shadow: none; transform: translateY(4px); }
+
+        .btn-next {
+            background: #fff;
+            border: 2px solid #2d3436;
+            color: #2d3436;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 2px 2px 0 #ccc;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-next:hover { background: #f9f9f9; }
+        .btn-next:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 #ccc; }
+
+        /* Small Help Button */
+        .btn-help {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #ccc;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            cursor: pointer;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            box-shadow: 2px 2px 0 #ccc;
+        }
+        .btn-help:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 #ccc; }
+
+        /* Animation for Listening */
+        .listening { animation: pulse 1.5s infinite; background: #ff4757 !important; border-color: #c0392b !important; }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 71, 87, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); }
+        }
+
+        /* Clear Overlay */
+        .clear-stamp {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg) scale(0);
+            border: 5px solid #2ecc71;
+            color: #2ecc71;
+            font-size: 32px;
+            font-weight: 900;
+            padding: 10px 20px;
+            border-radius: 10px;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 20;
+            background: rgba(255,255,255,0.9);
+            white-space: nowrap;
+        }
+        .stamp-animate { animation: stampIn 0.3s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes stampIn { to { transform: translate(-50%, -50%) rotate(-15deg) scale(1); opacity: 1; } }
+
+        /* Earned Popup Style */
+        .earned-popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 4rem;
+            font-weight: 900;
+            color: #e67e22;
+            text-shadow: 3px 3px 0 #fff, 0 0 20px rgba(255,255,255,0.8);
+            z-index: 30;
+            pointer-events: none;
+            white-space: nowrap;
+            opacity: 0;
+        }
+        .earned-popup.show {
+            animation: popReward 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes popReward {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        /* Footer Log Area */
+        .footer {
+            height: 40px;
+            background: #fff;
+            border-top: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-wrapper">
+    <div class="header">
+        <i class="fa-solid fa-store mr-2"></i> TAPIOCA RUSH - Dual Counter
+    </div>
+
+    <div class="stage">
+        <!-- Left Customer -->
+        <div id="lane0" class="lane">
+            <div class="lane-top">
+                <button class="btn-help" onclick="playModel(0)"><i class="fa-solid fa-volume-high"></i></button>
+                <div id="reward0" class="reward-tag">$30</div>
+                <div id="avatar0" class="customer-avatar"><i class="fa-solid fa-user"></i></div>
+                <div class="visual-container" id="visuals0"></div>
+                <div id="stamp0" class="clear-stamp">OK!</div>
+                <div id="earned0" class="earned-popup"></div>
+            </div>
+            
+            <div class="lane-bottom">
+                <button id="micBtn0" class="btn-provide" onclick="startListening(0)">
+                    <i class="fa-solid fa-microphone-lines"></i> 提供！
+                </button>
+                <button class="btn-next" onclick="refreshLane(0)">
+                    <i class="fa-solid fa-rotate"></i> 次の客
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Customer -->
+        <div id="lane1" class="lane">
+            <div class="lane-top">
+                <button class="btn-help" onclick="playModel(1)"><i class="fa-solid fa-volume-high"></i></button>
+                <div id="reward1" class="reward-tag">$50</div>
+                <div id="avatar1" class="customer-avatar"><i class="fa-solid fa-user"></i></div>
+                <div class="visual-container" id="visuals1"></div>
+                <div id="stamp1" class="clear-stamp">OK!</div>
+                <div id="earned1" class="earned-popup"></div>
+            </div>
+
+            <div class="lane-bottom">
+                <button id="micBtn1" class="btn-provide" onclick="startListening(1)">
+                    <i class="fa-solid fa-microphone-lines"></i> 提供！
+                </button>
+                <button class="btn-next" onclick="refreshLane(1)">
+                    <i class="fa-solid fa-rotate"></i> 次の客
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div id="speechLog">マイクボタンを押して提供してください</div>
+    </div>
+</div>
+
+<script>
+    // --- DATA ---
+    const MENU = [
+        { id: 'tea', kanji: '紅茶', kana: 'ホンチャ', image: '<i class="fa-solid fa-mug-hot" style="color:#e74c3c;"></i>' },
+        { id: 'green', kanji: '綠茶', kana: 'リュチャ', image: '<i class="fa-solid fa-leaf" style="color:#2ecc71;"></i>' },
+        { id: 'milk', kanji: '奶茶', kana: 'ナイチャ', image: '<i class="fa-solid fa-cow" style="color:#95a5a6;"></i>' },
+        { id: 'tapioca', kanji: '珍珠', kana: 'ゼンズー', image: '<i class="fa-solid fa-circle-dot" style="color:#2d3436;"></i>' },
+        { id: 'half', kanji: '半糖', kana: 'バンタン', image: '<i class="fa-solid fa-cube" style="color:#fdcb6e;"></i><span class="text-xs">1/2</span>' },
+        { id: 'noice', kanji: '去冰', kana: 'チュービン', image: '<i class="fa-solid fa-ban text-red-500"></i><i class="fa-regular fa-snowflake text-blue-300"></i>' },
+    ];
+
+    const ORDERS = [
+        { items: [0], text: "紅茶", price: 30 },
+        { items: [1], text: "綠茶", price: 30 },
+        { items: [2], text: "奶茶", price: 40 },
+        { items: [3, 2], text: "珍珠奶茶", price: 50 },
+        { items: [0, 4], text: "紅茶 半糖", price: 50 },
+        { items: [1, 5], text: "綠茶 去冰", price: 50 },
+        { items: [3, 2, 4, 5], text: "珍珠奶茶 半糖 去冰", price: 80 }
+    ];
+
+    const CUSTOMERS = [
+        { icon: 'fa-user-tie', color: '#2c3e50', bg: '#ecf0f1' },
+        { icon: 'fa-user-graduate', color: '#8e44ad', bg: '#f3e5f5' },
+        { icon: 'fa-user-nurse', color: '#e74c3c', bg: '#fadbd8' },
+        { icon: 'fa-child-reaching', color: '#f1c40f', bg: '#fef9e7' },
+        { icon: 'fa-user-ninja', color: '#34495e', bg: '#d6dbdf' },
+        { icon: 'fa-person-biking', color: '#27ae60', bg: '#d5f5e3' },
+        { icon: 'fa-user-astronaut', color: '#e67e22', bg: '#fdebd0' }
+    ];
+
+    // --- UTILS: Simplified to Traditional Map ---
+    const SIMPLIFIED_MAP = {
+        '红': '紅', '绿': '綠', '乌': '烏', '龙': '龍', '铁': '鐵', '观': '觀', '汤': '湯',
+        '奶': '奶', '茶': '茶', '珍': '珍', '珠': '珠', '半': '半', '糖': '糖', '去': '去', '冰': '冰'
+    };
+
+    // --- UTILS: Super Fuzzy Map ---
+    const FUZZY_MAP = {
+        '甲': '茶', '卡': '茶', '恰': '茶', '擦': '茶', '叉': '茶', '插': '茶', '差': '茶', '查': '茶', '察': '茶', '塔': '茶', '踏': '茶', '塌': '茶', '加': '茶', '夾': '茶',
+        '律': '綠', '率': '綠', '旅': '綠', '呂': '綠', '魯': '綠', '路': '綠', '六': '綠', '力': '綠', '利': '綠', '驢': '綠', '陸': '綠', '鹿': '綠', '露': '綠', '慮': '綠',
+        '趣': '去', '區': '去', '曲': '去', '取': '去', '七': '去', '吃': '去', '出': '去', '娶': '去', '驅': '去', '屈': '去', '氣': '去', '起': '去', '企': '去',
+        '兵': '冰', '並': '冰', '病': '冰', '濱': '冰', '丙': '冰', '柄': '冰', '餅': '冰',
+        '真': '珍', '針': '珍', '偵': '珍', '振': '珍', '鎮': '珍', '震': '珍', '貞': '珍', '枕': '珍', '爭': '珍', '正': '珍',
+        '豬': '珠', '諸': '珠', '朱': '珠', '祝': '珠', '住': '珠', '主': '珠', '注': '珠', '助': '珠', '駐': '珠',
+        '乃': '奶', '耐': '奶', '奈': '奶', '内': '奶', '那': '奶', '哪': '奶'
+    };
+
+    function normalizeText(text) {
+        let str = text.replace(/\s+/g, '');
+        let traditional = '';
+        for (let char of str) {
+            traditional += SIMPLIFIED_MAP[char] || char;
+        }
+        let fuzzy = '';
+        for (let char of traditional) {
+            fuzzy += FUZZY_MAP[char] || char;
+        }
+        return fuzzy;
+    }
+
+    // --- STATE ---
+    let orders = [null, null]; // [Left, Right]
+    let cleared = [false, false];
+    let isListening = false;
+    let targetLane = 0; // Which lane is being targeted by speech
+
+    // --- SETUP ---
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+    if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+        recognition.lang = 'zh-TW'; 
+        recognition.interimResults = false;
+        recognition.continuous = false;
+    } else {
+        alert("このブラウザは音声認識をサポートしていません。Chromeをご利用ください。");
+    }
+    
+    const synth = window.speechSynthesis;
+
+    // --- DOM ---
+    const speechLog = document.getElementById('speechLog');
+
+    // --- FUNCTIONS ---
+    function init() {
+        refreshLane(0);
+        setTimeout(() => refreshLane(1), 1500); 
+    }
+
+    function refreshLane(laneIndex) {
+        cleared[laneIndex] = false;
+        document.getElementById(`lane${laneIndex}`).classList.remove('cleared');
+        document.getElementById(`stamp${laneIndex}`).classList.remove('stamp-animate');
+        document.getElementById(`earned${laneIndex}`).classList.remove('show');
+        
+        // Re-enable mic button
+        const btn = document.getElementById(`micBtn${laneIndex}`);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-microphone-lines"></i> 提供！';
+        btn.classList.remove('listening');
+
+        const cust = CUSTOMERS[Math.floor(Math.random() * CUSTOMERS.length)];
+        const orderIdx = Math.floor(Math.random() * ORDERS.length);
+        const orderData = ORDERS[orderIdx];
+
+        let iconsHtml = "";
+        const keywords = [];
+        
+        orderData.items.forEach(idx => {
+            const item = MENU[idx];
+            iconsHtml += `<div class="order-icon text-gray-700">${item.image}</div>`;
+            keywords.push(item.kanji);
+        });
+
+        orders[laneIndex] = {
+            rawText: orderData.text,
+            price: orderData.price,
+            keywords: keywords 
+        };
+
+        const avatarEl = document.getElementById(`avatar${laneIndex}`);
+        avatarEl.innerHTML = `<i class="fa-solid ${cust.icon}"></i>`;
+        avatarEl.style.backgroundColor = cust.bg;
+        avatarEl.style.color = cust.color;
+        
+        avatarEl.classList.remove('customer-enter');
+        void avatarEl.offsetWidth;
+        avatarEl.classList.add('customer-enter');
+
+        document.getElementById(`visuals${laneIndex}`).innerHTML = iconsHtml;
+        document.getElementById(`reward${laneIndex}`).innerText = `$${orderData.price}`;
+        
+        speak(orders[laneIndex].rawText);
+    }
+
+    function playModel(index) {
+        if (orders[index]) speak(orders[index].rawText, 0.8);
+    }
+
+    function speak(text, rate = 1.0) {
+        if (synth.speaking) synth.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'zh-TW'; 
+        utter.rate = rate;
+        synth.speak(utter);
+    }
+
+    // --- EVENTS ---
+    
+    function startListening(laneIndex) {
+        if (!recognition) return;
+        
+        if (isListening) return; // Prevent multiple clicks
+
+        try {
+            targetLane = laneIndex;
+            recognition.start();
+            isListening = true;
+            
+            // UI Update for specific button
+            const btn = document.getElementById(`micBtn${laneIndex}`);
+            btn.classList.add('listening');
+            btn.innerHTML = '<i class="fa-solid fa-ear-listen"></i> 聞いています...';
+            
+            speechLog.innerText = `レーン${laneIndex === 0 ? '左' : '右'}のお客さんに提供中...`;
+            speechLog.style.color = "#e67e22";
+        } catch(e) {
+            console.error(e);
+            alert("マイクの使用を許可してください");
+        }
+    }
+    
+    // Expose to window for HTML onclick
+    window.startListening = startListening;
+    window.refreshLane = refreshLane;
+    window.playModel = playModel;
+
+    if (recognition) {
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            const cleanTranscript = normalizeText(transcript);
+            
+            speechLog.innerHTML = `聞き取った言葉: <b>${transcript}</b> → 変換: <b>${cleanTranscript}</b>`;
+            speechLog.style.color = "#2d3436";
+            
+            // Check ONLY against targetLane
+            if (!cleared[targetLane] && orders[targetLane]) {
+                const keywords = orders[targetLane].keywords;
+                let matchCount = 0;
+                
+                keywords.forEach(word => {
+                    if (cleanTranscript.includes(word)) {
+                        matchCount++;
+                    }
+                });
+                
+                const requiredMatches = Math.ceil(keywords.length * 0.5); 
+                
+                if (keywords.length > 0 && matchCount >= requiredMatches) {
+                    markCleared(targetLane);
+                } else {
+                    // Fail visual
+                    const btn = document.getElementById(`micBtn${targetLane}`);
+                    btn.innerHTML = '<i class="fa-solid fa-xmark"></i> 違うかも？';
+                    speechLog.style.color = "#e74c3c";
+                }
+            }
+        };
+
+        recognition.onend = () => {
+            isListening = false;
+            // Reset button if not cleared
+            if (!cleared[targetLane]) {
+                const btn = document.getElementById(`micBtn${targetLane}`);
+                btn.classList.remove('listening');
+                setTimeout(() => {
+                     if (!isListening && !cleared[targetLane]) {
+                        btn.innerHTML = '<i class="fa-solid fa-microphone-lines"></i> 提供！';
+                     }
+                }, 1000);
+            }
+        };
+        
+        recognition.onerror = (event) => {
+            isListening = false;
+            const btn = document.getElementById(`micBtn${targetLane}`);
+            btn.classList.remove('listening');
+            btn.innerHTML = '<i class="fa-solid fa-microphone-lines"></i> 提供！';
+            speechLog.innerText = `エラー: ${event.error}`;
+            speechLog.style.color = "#e74c3c";
+        };
+    }
+
+    function markCleared(index) {
+        if (cleared[index]) return; 
+        cleared[index] = true;
+        
+        // Disable button
+        const btn = document.getElementById(`micBtn${index}`);
+        btn.classList.remove('listening');
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> 完了';
+        btn.disabled = true;
+
+        document.getElementById(`lane${index}`).classList.add('cleared');
+        document.getElementById(`stamp${index}`).classList.add('stamp-animate');
+        
+        const earnedEl = document.getElementById(`earned${index}`);
+        earnedEl.innerText = `+$${orders[index].price}`;
+        earnedEl.classList.add('show');
+        
+        const utter = new SpeechSynthesisUtterance("シェーシェー！");
+        utter.lang = 'zh-TW';
+        synth.speak(utter);
+        
+        setTimeout(() => {
+            refreshLane(index);
+        }, 2000);
+    }
+
+    // Start
+    init();
+
+</script>
+</body>
+</html>
