@@ -43,7 +43,7 @@
             flex-direction: column;
             align-items: center;
             gap: 10px;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
         }
 
         .title-icon-large {
@@ -56,7 +56,7 @@
         .mode-select {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 15px;
             width: 100%;
             max-width: 300px;
             align-items: center;
@@ -64,10 +64,10 @@
 
         .btn-mode {
             width: 100%;
-            padding: 15px 0;
+            padding: 12px 0;
             border-radius: 50px;
             border: none;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 900;
             cursor: pointer;
             transition: all 0.1s;
@@ -76,26 +76,30 @@
             justify-content: center;
             gap: 10px;
             color: white;
-            box-shadow: 0 5px 0 rgba(0,0,0,0.1);
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
         }
-        .btn-mode:active { transform: translateY(5px); box-shadow: none; }
+        .btn-mode:active { transform: translateY(4px); box-shadow: none; }
+
+        /* ★追加: Super Easy Button */
+        .btn-super-easy {
+            background: #a29bfe; /* Purple */
+            box-shadow: 0 4px 0 #6c5ce7;
+        }
 
         .btn-easy {
             background: #2ecc71; /* Green */
-            box-shadow: 0 5px 0 #27ae60;
+            box-shadow: 0 4px 0 #27ae60;
         }
-        .btn-easy:active { box-shadow: none; }
 
         .btn-normal {
             background: #e67e22; /* Orange */
-            box-shadow: 0 5px 0 #d35400;
+            box-shadow: 0 4px 0 #d35400;
         }
-        .btn-normal:active { box-shadow: none; }
 
         .mode-desc {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: normal;
-            opacity: 0.8;
+            opacity: 0.9;
         }
 
         @keyframes bounce {
@@ -355,8 +359,7 @@
 </head>
 <body>
 
-    <!-- ★追加: BGM (ループ再生) -->
-    <!-- ファイルパスはご自身の環境に合わせて変更してください -->
+    <!-- BGM -->
     <audio id="bgm" loop src="material/bgm/cafe_music.mp3"></audio>
 
     <div id="title-screen" class="title-screen">
@@ -368,8 +371,13 @@
             <div style="font-size: 1.2rem; font-weight: normal; color: #888;">Voice Order Game</div>
         </div>
         
-        <!-- ★変更: モード選択ボタン -->
+        <!-- モード選択ボタン -->
         <div class="mode-select">
+            <!-- ★追加: Super Easy Mode -->
+            <button class="btn-mode btn-super-easy" onclick="startGame('super_easy')">
+                <i class="fa-solid fa-child"></i> SUPER EASY
+                <span class="mode-desc">（カタカナOK）</span>
+            </button>
             <button class="btn-mode btn-easy" onclick="startGame('easy')">
                 <i class="fa-solid fa-star"></i> EASY MODE
                 <span class="mode-desc">（補正あり）</span>
@@ -475,8 +483,35 @@
     ];
 
     // --- LOGIC ---
-    // ★追加: 現在のゲームモード ('easy' or 'normal')
     let currentMode = 'easy';
+
+    // ★追加: 日本語読みを台湾華語に変換するマップ (Super Easy用)
+    const JA_MAP = {
+        'ウーロンチャ': '烏龍茶', 'ウーロン': '烏龍茶', '烏龍茶': '烏龍茶',
+        'ホンチャ': '紅茶', 'コウチャ': '紅茶', '紅茶': '紅茶',
+        'リョクチャ': '綠茶', 'リュチャ': '綠茶', '緑茶': '綠茶',
+        'コーヒー': '咖啡', 'カフェ': '咖啡', '咖啡': '咖啡',
+        'フルーツティー': '水果茶', 'スイカチャ': '水果茶', '水果茶': '水果茶',
+        
+        'パール': '珍珠', 'タピオカ': '珍珠', '珍珠': '珍珠',
+        'ナタデココ': '椰果', '椰果': '椰果',
+        'ミルク': '鮮奶', 'ギュウニュウ': '鮮奶', '鮮奶': '鮮奶',
+        'チーズ': '奶蓋', 'ナイガイ': '奶蓋', '奶蓋': '奶蓋', 'チーズクリーム': '奶蓋',
+        'ヤクルト': '多多', '多多': '多多',
+        'プリン': '布丁', '布丁': '布丁',
+        'センソウ': '仙草', 'ゼリー': '仙草', '仙草': '仙草',
+
+        'ムトウ': '無糖', 'ゼロ': '無糖', '無糖': '無糖',
+        'ビトウ': '微糖', '微糖': '微糖',
+        'ショウトウ': '少糖', 'スクナメ': '少糖', '少糖': '少糖',
+        'ハントウ': '半糖', 'ハンブン': '半糖', '半糖': '半糖',
+        'ジョウジョウトウ': '正常糖', 'フツウ': '正常糖', '正常糖': '正常糖',
+
+        'キョヒョウ': '去冰', 'ナシ': '去冰', '去冰': '去冰', '氷なし': '去冰',
+        'ビヒョウ': '微冰', '微冰': '微冰',
+        'ショウヒョウ': '少冰', 'スクナメ': '少冰', '少冰': '少冰',
+        'ジョウジョウヒョウ': '正常冰', 'フツウ': '正常冰', '正常冰': '正常冰', '氷普通': '正常冰'
+    };
 
     const SIMPLIFIED_MAP = {
         '红': '紅', '绿': '綠', '乌': '烏', '龙': '龍', '铁': '鐵', '观': '觀', '汤': '湯',
@@ -496,17 +531,35 @@
         '豬': '珠', '諸': '珠', '朱': '珠', '祝': '珠', '住': '珠', '主': '珠', '注': '珠', '助': '珠', '駐': '珠',
         '乃': '奶', '耐': '奶', '奈': '奶', '内': '奶', '那': '奶', '哪': '奶',
         '叶': '椰', '丹': '糖', '建': '正', '彰': '常',
-        '慕': '烏', '容': '龍', '小': '少', '唐': '糖'
+        '慕': '烏', '容': '龍', '小': '少', '唐': '糖',
+        
+        // ★追加: Easy Mode用の補正
+        '錢': '仙', // 錢草 -> 仙草
+        '制': '去', // 制冰 -> 去冰
+        '會': '微', // 會堂 -> 微糖
+        '堂': '糖'  // 會堂 -> 微糖
     };
 
     function normalizeText(text) {
+        // ★Super Easy Mode: 日本語認識結果を処理
+        if (currentMode === 'super_easy') {
+            let result = "";
+            // JA_MAPのキーが含まれているかチェックし、対応する繁体字に置換
+            for (const [key, value] of Object.entries(JA_MAP)) {
+                if (text.includes(key)) {
+                    result += value;
+                }
+            }
+            // 何もマッチしなかった場合はそのまま返す（デバッグ用）
+            return result || text;
+        }
+
         let str = text.replace(/\s+/g, '');
         
-        // 簡体字→繁体字変換はどのモードでも実行（文字コードの統一のため）
+        // 簡体字→繁体字変換
         let traditional = '';
         for (let char of str) { traditional += SIMPLIFIED_MAP[char] || char; }
 
-        // ★分岐: Easyモードのみ強力な補正を適用
         if (currentMode === 'easy') {
             traditional = traditional.replace(/棒棒/g, '半糖'); 
             traditional = traditional.replace(/红枣/g, '紅茶'); 
@@ -517,7 +570,6 @@
             for (let char of traditional) { fuzzy += FUZZY_MAP[char] || char; }
             return fuzzy;
         } else {
-            // ★Normalモード: そのまま返す（補正なし）
             return traditional;
         }
     }
@@ -572,20 +624,31 @@
     }
     const synth = window.speechSynthesis;
     const speechLog = document.getElementById('speechLog');
-    const bgm = document.getElementById('bgm'); // BGM要素
+    const bgm = document.getElementById('bgm'); 
 
     // --- MAIN FUNCTIONS ---
-    // ★変更: 引数でモードを受け取る
     function startGame(mode) {
         currentMode = mode || 'easy';
-        document.getElementById('mode-display').innerText = currentMode === 'easy' ? '[EASY]' : '[NORMAL]';
+        let modeLabel = '';
+        
+        // ★修正: Super Easy Modeの言語設定切り替え
+        if (recognition) {
+            if (currentMode === 'super_easy') {
+                recognition.lang = 'ja-JP';
+                modeLabel = '[SUPER EASY]';
+            } else {
+                recognition.lang = 'zh-TW';
+                modeLabel = currentMode === 'easy' ? '[EASY]' : '[NORMAL]';
+            }
+        }
+        
+        document.getElementById('mode-display').innerText = modeLabel;
 
         const titleScreen = document.getElementById('title-screen');
         const gameScreen = document.getElementById('game-screen');
         
-        // BGM再生開始（ユーザー操作後なので再生可能）
         if(bgm) {
-            bgm.volume = 0.1; // 音量小さめ
+            bgm.volume = 0.1; 
             bgm.play().catch(e => console.log("BGM play failed", e));
         }
 
@@ -607,7 +670,6 @@
         }
         if(synth) synth.cancel();
         
-        // BGM停止（オプション：流したままでも良い）
         if(bgm) {
             bgm.pause();
             bgm.currentTime = 0;
