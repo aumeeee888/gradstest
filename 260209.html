@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DRINK STAND - Voice Order Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* --- Base Styles --- */
+        body {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            background-color: #fdfbf7;
+            color: #4a4a4a;
+            overflow: hidden;
+            margin: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* --- Title Screen --- */
+        .title-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #fdfbf7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            transition: opacity 0.5s ease-out;
+        }
+        
+        .title-logo {
+            font-size: 3rem;
+            font-weight: 900;
+            color: #4a4a4a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 40px;
+        }
+
+        .title-icon-large {
+            font-size: 6rem;
+            color: #ff9a9e;
+            animation: bounce 2s infinite;
+        }
+
+        /* Mode Selection Buttons */
+        .mode-select {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            max-width: 300px;
+            align-items: center;
+        }
+
+        .btn-mode {
+            width: 100%;
+            padding: 15px 0;
+            border-radius: 50px;
+            border: none;
+            font-size: 1.2rem;
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: white;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.1);
+        }
+        .btn-mode:active { transform: translateY(5px); box-shadow: none; }
+
+        .btn-easy {
+            background: #2ecc71; /* Green */
+            box-shadow: 0 5px 0 #27ae60;
+        }
+        .btn-easy:active { box-shadow: none; }
+
+        .btn-normal {
+            background: #e67e22; /* Orange */
+            box-shadow: 0 5px 0 #d35400;
+        }
+        .btn-normal:active { box-shadow: none; }
+
+        .mode-desc {
+            font-size: 0.8rem;
+            font-weight: normal;
+            opacity: 0.8;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-20px);}
+            60% {transform: translateY(-10px);}
+        }
+
+        /* --- Game Screen --- */
+        .app-wrapper {
+            width: 100vw;
+            height: 100vh;
+            display: none;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            height: 60px;
+            background: #ffffff;
+            color: #4a4a4a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 900;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            z-index: 50;
+            border-bottom: 4px solid #f0f0f0;
+            position: relative;
+        }
+
+        /* Back Button */
+        .btn-back {
+            position: absolute;
+            left: 15px;
+            background: #f1f2f6;
+            border: none;
+            color: #a4b0be;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 16px;
+            box-shadow: 0 2px 0 #dcdde1;
+        }
+        .btn-back:hover { background: #dfe4ea; color: #2f3542; }
+        .btn-back:active { transform: translateY(2px); box-shadow: none; }
+
+        /* Stage */
+        .stage {
+            flex-grow: 1;
+            display: flex;
+            position: relative;
+            background: #fdfbf7;
+        }
+
+        /* Lane */
+        .lane {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 20px 10px;
+            position: relative;
+            transition: background 0.3s;
+            border-right: 2px dashed #e0e0e0;
+        }
+        .lane:last-child { border-right: none; }
+        .lane.cleared { background-color: rgba(209, 250, 229, 0.6); }
+
+        /* Customer */
+        .customer-area {
+            position: relative;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            height: 140px;
+        }
+        .customer-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            background: #ffffff;
+            border: 4px solid #ffffff;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            z-index: 10;
+            color: #555;
+            overflow: hidden;
+            transition: transform 0.3s;
+        }
+        .customer-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .customer-enter { animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+        .reward-pill {
+            position: absolute;
+            top: 0; left: 50%;
+            transform: translateX(-50%) translateY(-50%);
+            background: #FF6B6B;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 20;
+        }
+
+        .btn-replay {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 2px solid #eee;
+            color: #888;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            cursor: pointer;
+            position: absolute;
+            top: 10px; right: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .btn-replay:hover { color: #FF6B6B; border-color: #FF6B6B; }
+
+        /* Order Cards */
+        .order-container {
+            width: 100%;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 6px;
+            padding: 0 4px;
+        }
+        .order-card {
+            flex: 1;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 4px;
+            min-height: 160px;
+            border-bottom: 3px solid #f0f0f0;
+        }
+        .card-label {
+            font-size: 10px;
+            color: #aaa;
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        .card-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: 100%;
+        }
+        .card-icon { font-size: 55px; line-height: 1; display: flex; align-items: center; justify-content: center; }
+        .card-icon img { width: 90px; height: 90px; object-fit: contain; }
+        .card-text { font-size: 13px; font-weight: bold; text-align: center; color: #555; line-height: 1.2; }
+
+        /* Actions */
+        .action-area {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+            padding-bottom: 20px;
+        }
+        .btn-mic {
+            flex-grow: 1;
+            max-width: 160px;
+            height: 60px;
+            border-radius: 50px;
+            background: #FF9F43;
+            color: white;
+            border: none;
+            font-weight: 900;
+            font-size: 16px;
+            box-shadow: 0 4px 0 #e67e22;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+        .btn-mic:active { transform: translateY(4px); box-shadow: 0 0 0 #e67e22; }
+        #lane0 .btn-mic { background: #ff9a9e; box-shadow: 0 4px 0 #e17076; }
+        #lane1 .btn-mic { background: #81ecec; box-shadow: 0 4px 0 #00cec9; color: #2d3436; }
+
+        .btn-next {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 2px solid #eee;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 3px 0 #ddd;
+        }
+        .btn-next:active { transform: translateY(3px); box-shadow: none; }
+
+        .listening { animation: pulse 1.5s infinite; background: #ff4757 !important; box-shadow: 0 4px 0 #c0392b !important; color: white !important; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(255, 71, 87, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); } }
+
+        /* Popups */
+        .clear-stamp {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-15deg) scale(0);
+            border: 4px solid #2ecc71; color: #2ecc71; font-size: 28px; font-weight: 900;
+            padding: 8px 16px; border-radius: 12px; background: rgba(255,255,255,0.95);
+            opacity: 0; pointer-events: none; z-index: 30; white-space: nowrap;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .stamp-animate { animation: stampIn 0.3s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .earned-popup {
+            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0);
+            font-size: 3.5rem; font-weight: 900; color: #fab1a0;
+            text-shadow: 2px 2px 0 #fff, 0 0 10px rgba(0,0,0,0.1);
+            z-index: 40; pointer-events: none; white-space: nowrap; opacity: 0;
+        }
+        .earned-popup.show { animation: popReward 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes stampIn { to { transform: translate(-50%, -50%) rotate(-15deg) scale(1); opacity: 1; } }
+        @keyframes popReward { 0% { transform: translate(-50%, -50%) scale(0); opacity: 0; } 50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+        @keyframes popIn { 0% { transform: scale(0) translateY(50px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
+
+        /* Footer */
+        .footer { height: 30px; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #999; border-top: 1px solid #f0f0f0; }
+    </style>
+</head>
+<body>
+
+    <!-- ★追加: BGM (ループ再生) -->
+    <!-- ファイルパスはご自身の環境に合わせて変更してください -->
+    <audio id="bgm" loop src="material/bgm/cafe_music.mp3"></audio>
+
+    <div id="title-screen" class="title-screen">
+        <div class="title-logo">
+            <div class="title-icon-large">
+                <i class="fa-solid fa-mug-hot"></i>
+            </div>
+            <div>DRINK STAND</div>
+            <div style="font-size: 1.2rem; font-weight: normal; color: #888;">Voice Order Game</div>
+        </div>
+        
+        <!-- ★変更: モード選択ボタン -->
+        <div class="mode-select">
+            <button class="btn-mode btn-easy" onclick="startGame('easy')">
+                <i class="fa-solid fa-star"></i> EASY MODE
+                <span class="mode-desc">（補正あり）</span>
+            </button>
+            <button class="btn-mode btn-normal" onclick="startGame('normal')">
+                <i class="fa-solid fa-fire"></i> NORMAL MODE
+                <span class="mode-desc">（補正なし）</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="game-screen" class="app-wrapper">
+        <div class="header">
+            <button class="btn-back" onclick="returnToTitle()" title="タイトルへ戻る">
+                <i class="fa-solid fa-house"></i>
+            </button>
+            <i class="fa-solid fa-mug-hot mr-2" style="color:#ff9a9e;"></i> DRINK STAND <span id="mode-display" style="font-size: 0.8rem; margin-left: 10px; color: #999;"></span>
+        </div>
+
+        <div class="stage">
+            <div id="lane0" class="lane">
+                <div class="customer-area">
+                    <div class="reward-pill" id="reward0">$30</div>
+                    <div id="avatar0" class="customer-avatar"><i class="fa-solid fa-user"></i></div>
+                    <button class="btn-replay" onclick="playModel(0)"><i class="fa-solid fa-volume-high"></i></button>
+                </div>
+                <div class="order-container" id="visuals0"></div>
+                <div id="stamp0" class="clear-stamp">PERFECT!</div>
+                <div id="earned0" class="earned-popup"></div>
+                <div class="action-area">
+                    <button id="micBtn0" class="btn-mic" 
+                        onmousedown="startRecording(0, event)" onmouseup="stopRecording(0, event)" onmouseleave="stopRecording(0, event)"
+                        ontouchstart="startRecording(0, event)" ontouchend="stopRecording(0, event)">
+                        <i class="fa-solid fa-microphone-lines"></i> 押して喋る
+                    </button>
+                    <button class="btn-next" onclick="refreshLane(0)"><i class="fa-solid fa-rotate"></i></button>
+                </div>
+            </div>
+
+            <div id="lane1" class="lane">
+                <div class="customer-area">
+                    <div class="reward-pill" id="reward1">$50</div>
+                    <div id="avatar1" class="customer-avatar"><i class="fa-solid fa-user"></i></div>
+                    <button class="btn-replay" onclick="playModel(1)"><i class="fa-solid fa-volume-high"></i></button>
+                </div>
+                <div class="order-container" id="visuals1"></div>
+                <div id="stamp1" class="clear-stamp">PERFECT!</div>
+                <div id="earned1" class="earned-popup"></div>
+                <div class="action-area">
+                    <button id="micBtn1" class="btn-mic" 
+                        onmousedown="startRecording(1, event)" onmouseup="stopRecording(1, event)" onmouseleave="stopRecording(1, event)"
+                        ontouchstart="startRecording(1, event)" ontouchend="stopRecording(1, event)">
+                        <i class="fa-solid fa-microphone-lines"></i> 押して喋る
+                    </button>
+                    <button class="btn-next" onclick="refreshLane(1)"><i class="fa-solid fa-rotate"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div id="speechLog">ボタンを【押している間】だけ注文を聞き取ります</div>
+        </div>
+    </div>
+
+<script>
+    // --- GAME DATA ---
+    const MENU = [
+        // Drinks
+        { id: 'oolong', type: 'base', price: 30, kanji: '烏龍茶', kana: 'ウーロンチャ', image: '<img src="material/drink/drink_oolongtea.png">' },
+        { id: 'black', type: 'base', price: 30, kanji: '紅茶', kana: 'ホンチャ', image: '<img src="material/drink/drink_blacktea.png">' },
+        { id: 'green', type: 'base', price: 30, kanji: '綠茶', kana: 'リュチャ', image: '<img src="material/drink/drink_greentea.png">' },
+        { id: 'coffee', type: 'base', price: 40, kanji: '咖啡', kana: 'カーフェイ', image: '<img src="material/drink/drink_coffee.png">' },
+        { id: 'fruit', type: 'base', price: 40, kanji: '水果茶', kana: 'シュイグオチャ', image: '<img src="material/drink/drink_fruitstea.png">' },
+        
+        // Toppings
+        { id: 'pearl', type: 'topping', price: 10, kanji: '珍珠', kana: 'ゼンズー', image: '<img src="material/topping/top_boba.png">' },
+        { id: 'coco', type: 'topping', price: 10, kanji: '椰果', kana: 'イェグオ', image: '<img src="material/topping/top_natadecoco.png">' },
+        { id: 'milk', type: 'topping', price: 10, kanji: '鮮奶', kana: 'シェンナイ', image: '<img src="material/topping/top_milk.png">' },
+        { id: 'cheese', type: 'topping', price: 15, kanji: '奶蓋', kana: 'ナイガイ', image: '<img src="material/topping/top_cheese.png">' },
+        { id: 'yakult', type: 'topping', price: 15, kanji: '多多', kana: 'ドゥオドゥオ', image: '<img src="material/topping/top_yogurt.png">' }, 
+        { id: 'pudding', type: 'topping', price: 15, kanji: '布丁', kana: 'ブディン', image: '<img src="material/topping/top_pudding.png">' },
+        { id: 'jelly', type: 'topping', price: 10, kanji: '仙草', kana: 'シェンツァオ', image: '<img src="material/topping/top_grass.png">' },
+
+        // Sugar
+        { id: 's0', type: 'sugar', price: 0, kanji: '無糖', kana: 'ウータン', image: '<span class="text-lg font-bold text-gray-400">0%</span>' },
+        { id: 's25', type: 'sugar', price: 0, kanji: '微糖', kana: 'ウェイタン', image: '<span class="text-lg font-bold text-blue-400">25%</span>' },
+        { id: 's70', type: 'sugar', price: 0, kanji: '少糖', kana: 'シャオタン', image: '<span class="text-lg font-bold text-pink-400">70%</span>' },
+        { id: 's50', type: 'sugar', price: 0, kanji: '半糖', kana: 'バンタン', image: '<span class="text-lg font-bold text-yellow-400">50%</span>' },
+        { id: 's100', type: 'sugar', price: 0, kanji: '正常糖', kana: 'ジェンチャンタン', image: '<span class="text-lg font-bold text-red-500">100%</span>' },
+
+        // Ice
+        { id: 'i0', type: 'ice', price: 0, kanji: '去冰', kana: 'チュービン', image: '<i class="fa-solid fa-ban text-red-500"></i>' },
+        { id: 'i25', type: 'ice', price: 0, kanji: '微冰', kana: 'ウェイビン', image: '<i class="fa-regular fa-snowflake text-blue-200"></i>' },
+        { id: 'i70', type: 'ice', price: 0, kanji: '少冰', kana: 'シャオビン', image: '<i class="fa-regular fa-snowflake text-blue-300"></i>' },
+        { id: 'i100', type: 'ice', price: 0, kanji: '正常冰', kana: 'ジェンチャンビン', image: '<i class="fa-regular fa-snowflake text-blue-500"></i>' },
+    ];
+
+    const CUSTOMERS = [
+        { img: 'material/customer/customer_obachan.png', icon: 'fa-person-dress', color: '#e84393', bg: '#ffeaa7', desc: 'おばちゃん' },
+        { img: 'material/customer/customer_driver.png', icon: 'fa-helmet-safety', color: '#2d3436', bg: '#dfe6e9', desc: 'ドライバー' },
+        { img: 'material/customer/customer_girl.png', icon: 'fa-user-graduate', color: '#8e44ad', bg: '#f3e5f5', desc: '学生' },
+        { img: 'material/customer/customer_ojisan.png', icon: 'fa-shirt', color: '#ff7675', bg: '#fab1a0', desc: 'おじさん' }
+    ];
+
+    // --- LOGIC ---
+    // ★追加: 現在のゲームモード ('easy' or 'normal')
+    let currentMode = 'easy';
+
+    const SIMPLIFIED_MAP = {
+        '红': '紅', '绿': '綠', '乌': '烏', '龙': '龍', '铁': '鐵', '观': '觀', '汤': '湯',
+        '奶': '奶', '茶': '茶', '珍': '珍', '珠': '珠', '半': '半', '糖': '糖', '去': '去', '冰': '冰',
+        '杂': '茶', '志': '去'
+    };
+    const FUZZY_MAP = {
+        '甲': '茶', '卡': '茶', '恰': '茶', '擦': '茶', '叉': '茶', '插': '茶', '差': '茶', '查': '茶', '察': '茶', '塔': '茶', '踏': '茶', '塌': '茶', '加': '茶', '夾': '茶', '呷': '茶',
+        '杂': '茶', '雜': '茶', 
+        '律': '綠', '率': '綠', '旅': '綠', '呂': '綠', '魯': '綠', '路': '綠', '六': '綠', '力': '綠', '利': '綠', '驢': '綠', '陸': '綠', '鹿': '綠', '露': '綠', '慮': '綠', '立': '綠', '粒': '綠', '麗': '綠',
+        '趣': '去', '區': '去', '曲': '去', '取': '去', '七': '去', '吃': '去', '出': '去', '娶': '去', '驅': '去', '屈': '去', '氣': '去', '起': '去', '企': '去',
+        '志': '去', '器': '去',
+        '兵': '冰', '並': '冰', '病': '冰', '濱': '冰', '丙': '冰', '柄': '冰', '餅': '冰', '滨': '冰',
+        '炒': '少', 
+        '真': '珍', '針': '珍', '偵': '珍', '振': '珍', '鎮': '珍', '震': '珍', '貞': '珍', '枕': '珍', '爭': '珍', '正': '珍',
+        '织': '珠', 
+        '豬': '珠', '諸': '珠', '朱': '珠', '祝': '珠', '住': '珠', '主': '珠', '注': '珠', '助': '珠', '駐': '珠',
+        '乃': '奶', '耐': '奶', '奈': '奶', '内': '奶', '那': '奶', '哪': '奶',
+        '叶': '椰', '丹': '糖', '建': '正', '彰': '常',
+        '慕': '烏', '容': '龍', '小': '少', '唐': '糖'
+    };
+
+    function normalizeText(text) {
+        let str = text.replace(/\s+/g, '');
+        
+        // 簡体字→繁体字変換はどのモードでも実行（文字コードの統一のため）
+        let traditional = '';
+        for (let char of str) { traditional += SIMPLIFIED_MAP[char] || char; }
+
+        // ★分岐: Easyモードのみ強力な補正を適用
+        if (currentMode === 'easy') {
+            traditional = traditional.replace(/棒棒/g, '半糖'); 
+            traditional = traditional.replace(/红枣/g, '紅茶'); 
+            traditional = traditional.replace(/蒸吃/g, '珍珠'); 
+            traditional = traditional.replace(/味道/g, '微糖'); 
+
+            let fuzzy = '';
+            for (let char of traditional) { fuzzy += FUZZY_MAP[char] || char; }
+            return fuzzy;
+        } else {
+            // ★Normalモード: そのまま返す（補正なし）
+            return traditional;
+        }
+    }
+
+    function generateRandomOrder() {
+        const bases = MENU.filter(i => i.type === 'base');
+        const toppings = MENU.filter(i => i.type === 'topping');
+        const sugars = MENU.filter(i => i.type === 'sugar');
+        const ices = MENU.filter(i => i.type === 'ice');
+
+        const selectedBase = bases[Math.floor(Math.random() * bases.length)];
+        let items = [selectedBase];
+        let price = selectedBase.price || 30;
+
+        const toppingCount = Math.random() > 0.4 ? 1 : 0; 
+        const shuffledToppings = toppings.sort(() => 0.5 - Math.random()).slice(0, toppingCount);
+        shuffledToppings.forEach(t => {
+            items.push(t);
+            price += (t.price || 10);
+        });
+
+        if (Math.random() > 0.4) {
+             const selectedSugar = sugars[Math.floor(Math.random() * sugars.length)];
+             items.push(selectedSugar);
+        }
+        if (Math.random() > 0.4) {
+             const selectedIce = ices[Math.floor(Math.random() * ices.length)];
+             items.push(selectedIce);
+        }
+
+        const kanjiList = items.map(i => i.kanji);
+        const rawText = kanjiList.join(" ");
+
+        return { items: items, text: rawText, price: price, keywords: kanjiList };
+    }
+
+    // --- STATE ---
+    let orders = [null, null]; 
+    let cleared = [false, false];
+    let isListening = false;
+    let targetLane = 0; 
+    let finalTranscript = "";
+
+    // --- SETUP ---
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+    if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+        recognition.lang = 'zh-TW'; 
+        recognition.continuous = true; 
+        recognition.interimResults = true; 
+    }
+    const synth = window.speechSynthesis;
+    const speechLog = document.getElementById('speechLog');
+    const bgm = document.getElementById('bgm'); // BGM要素
+
+    // --- MAIN FUNCTIONS ---
+    // ★変更: 引数でモードを受け取る
+    function startGame(mode) {
+        currentMode = mode || 'easy';
+        document.getElementById('mode-display').innerText = currentMode === 'easy' ? '[EASY]' : '[NORMAL]';
+
+        const titleScreen = document.getElementById('title-screen');
+        const gameScreen = document.getElementById('game-screen');
+        
+        // BGM再生開始（ユーザー操作後なので再生可能）
+        if(bgm) {
+            bgm.volume = 0.1; // 音量小さめ
+            bgm.play().catch(e => console.log("BGM play failed", e));
+        }
+
+        titleScreen.style.opacity = '0';
+        setTimeout(() => {
+            titleScreen.style.display = 'none';
+            gameScreen.style.display = 'flex';
+            init();
+        }, 500);
+    }
+
+    function returnToTitle() {
+        const titleScreen = document.getElementById('title-screen');
+        const gameScreen = document.getElementById('game-screen');
+        
+        if(recognition) {
+            isListening = false;
+            try { recognition.stop(); } catch(e){}
+        }
+        if(synth) synth.cancel();
+        
+        // BGM停止（オプション：流したままでも良い）
+        if(bgm) {
+            bgm.pause();
+            bgm.currentTime = 0;
+        }
+
+        gameScreen.style.display = 'none';
+        titleScreen.style.display = 'flex';
+        setTimeout(() => { titleScreen.style.opacity = '1'; }, 10);
+    }
+
+    function init() {
+        refreshLane(0);
+        setTimeout(() => refreshLane(1), 1500); 
+    }
+
+    function refreshLane(laneIndex) {
+        cleared[laneIndex] = false;
+        const laneEl = document.getElementById(`lane${laneIndex}`);
+        laneEl.classList.remove('cleared');
+        document.getElementById(`stamp${laneIndex}`).classList.remove('stamp-animate');
+        document.getElementById(`earned${laneIndex}`).classList.remove('show');
+        
+        const btn = document.getElementById(`micBtn${laneIndex}`);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-microphone-lines"></i> 押して喋る';
+        btn.classList.remove('listening');
+
+        const cust = CUSTOMERS[Math.floor(Math.random() * CUSTOMERS.length)];
+        const newOrder = generateRandomOrder();
+
+        const baseItems = newOrder.items.filter(i => i.type === 'base');
+        const toppingItems = newOrder.items.filter(i => i.type === 'topping');
+        const sugarItems = newOrder.items.filter(i => i.type === 'sugar');
+        const iceItems = newOrder.items.filter(i => i.type === 'ice');
+
+        orders[laneIndex] = {
+            rawText: newOrder.text,
+            price: newOrder.price,
+            keywords: newOrder.keywords 
+        };
+
+        let cardsHtml = '';
+        cardsHtml += createCardHtml('BASE', baseItems);
+        cardsHtml += createCardHtml('TOPPING', toppingItems);
+        cardsHtml += createAdjustCardHtml(sugarItems, iceItems);
+
+        document.getElementById(`visuals${laneIndex}`).innerHTML = cardsHtml;
+
+        const avatarEl = document.getElementById(`avatar${laneIndex}`);
+        if (cust.img) {
+            avatarEl.innerHTML = `<img src="${cust.img}" alt="Customer">`;
+            avatarEl.style.backgroundColor = "transparent";
+            avatarEl.style.border = "none";
+        } else {
+            avatarEl.innerHTML = `<i class="fa-solid ${cust.icon}"></i>`;
+            avatarEl.style.backgroundColor = cust.bg;
+            avatarEl.style.color = cust.color;
+            avatarEl.style.border = "4px solid white";
+        }
+        avatarEl.classList.remove('customer-enter');
+        void avatarEl.offsetWidth;
+        avatarEl.classList.add('customer-enter');
+
+        document.getElementById(`reward${laneIndex}`).innerText = `$${newOrder.price}`;
+        speak(orders[laneIndex].rawText);
+    }
+
+    function createCardHtml(label, items) {
+        let contentHtml = '';
+        if (items.length === 0) {
+            contentHtml = `<div class="card-text" style="color:#ddd;">ー</div>`;
+        } else {
+            items.forEach(item => {
+                contentHtml += `
+                    <div class="card-icon">${item.image}</div>
+                    <div class="card-text">${item.kanji}</div>
+                `;
+            });
+        }
+        return `<div class="order-card"><div class="card-label">${label}</div><div class="card-content">${contentHtml}</div></div>`;
+    }
+
+    function createAdjustCardHtml(sugarItems, iceItems) {
+        const innerStyle = "height: 55px; display: flex; flex-direction: column; align-items: center; justify-content: center;";
+
+        const sugarHtml = sugarItems.length > 0 
+            ? `<div style="${innerStyle}"><div style="font-size: 35px; line-height: 1; height: 35px; display:flex; align-items:center;">${sugarItems[0].image}</div><div style="font-size: 11px; font-weight: bold; color: #555;">${sugarItems[0].kanji}</div></div>`
+            : `<div style="${innerStyle}"><div style="color: #ddd; font-weight: bold; font-size: 18px;">ー</div></div>`;
+
+        const iceHtml = iceItems.length > 0 
+            ? `<div style="${innerStyle}"><div style="font-size: 30px; line-height: 1; height: 35px; display:flex; align-items:center;">${iceItems[0].image}</div><div style="font-size: 11px; font-weight: bold; color: #555;">${iceItems[0].kanji}</div></div>`
+            : `<div style="${innerStyle}"><div style="color: #ddd; font-weight: bold; font-size: 18px;">ー</div></div>`;
+
+        return `
+            <div class="order-card">
+                <div class="card-label">ADJUST</div>
+                <div class="card-content" style="justify-content: center; gap: 0;">
+                    <div style="flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; border-bottom: 2px dashed #eee;">
+                        ${sugarHtml}
+                    </div>
+                    <div style="flex: 1; width: 100%; display: flex; align-items: center; justify-content: center;">
+                        ${iceHtml}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function playModel(index) {
+        if (orders[index]) speak(orders[index].rawText, 0.85);
+    }
+
+    function speak(text, rate = 1.0) {
+        if (synth.speaking) synth.cancel();
+        const textWithPauses = text.replace(/\s+/g, '，');
+        const utter = new SpeechSynthesisUtterance(textWithPauses);
+        utter.lang = 'zh-TW'; 
+        utter.rate = rate;
+        synth.speak(utter);
+    }
+
+    // --- EVENTS & RECORDING ---
+    function startRecording(laneIndex, event) {
+        if (event) event.preventDefault();
+        if (!recognition) { alert("ブラウザ未対応"); return; }
+        if (isListening) return;
+
+        try {
+            targetLane = laneIndex;
+            finalTranscript = "";
+            recognition.start();
+            isListening = true;
+            
+            const btn = document.getElementById(`micBtn${laneIndex}`);
+            btn.classList.add('listening');
+            btn.innerHTML = '<i class="fa-solid fa-ear-listen"></i> 離して判定';
+            speechLog.innerText = `聞き取り中...`;
+            speechLog.style.color = "#e67e22";
+        } catch(e) { console.error(e); }
+    }
+
+    function stopRecording(laneIndex, event) {
+        if (event) event.preventDefault();
+        if (!isListening || targetLane !== laneIndex) return;
+        recognition.stop();
+        const btn = document.getElementById(`micBtn${laneIndex}`);
+        btn.classList.remove('listening');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 判定中...';
+    }
+
+    function checkOrder(laneIndex) {
+        const btn = document.getElementById(`micBtn${laneIndex}`);
+        if (!cleared[laneIndex]) btn.innerHTML = '<i class="fa-solid fa-microphone-lines"></i> 押して喋る';
+        if (!finalTranscript) return;
+
+        const cleanTranscript = normalizeText(finalTranscript);
+        speechLog.innerHTML = `確定: <b>${cleanTranscript}</b>`;
+
+        if (!cleared[laneIndex] && orders[laneIndex]) {
+            const keywords = orders[laneIndex].keywords;
+            let matchCount = 0;
+            keywords.forEach(word => { if (cleanTranscript.includes(word)) matchCount++; });
+            
+            const requiredMatches = Math.ceil(keywords.length * 0.5); 
+            if (keywords.length > 0 && matchCount >= requiredMatches) {
+                markCleared(laneIndex);
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-xmark"></i> 違うかも';
+                speechLog.style.color = "#e74c3c";
+                setTimeout(() => {
+                    if(!cleared[laneIndex] && !isListening) btn.innerHTML = '<i class="fa-solid fa-microphone-lines"></i> 押して喋る';
+                }, 1000);
+            }
+        }
+    }
+
+    function markCleared(index) {
+        if (cleared[index]) return; 
+        cleared[index] = true;
+        const btn = document.getElementById(`micBtn${index}`);
+        btn.classList.remove('listening');
+        btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+        btn.disabled = true;
+
+        document.getElementById(`lane${index}`).classList.add('cleared');
+        document.getElementById(`stamp${index}`).classList.add('stamp-animate');
+        document.getElementById(`earned${index}`).innerText = `+$${orders[index].price}`;
+        document.getElementById(`earned${index}`).classList.add('show');
+        
+        const utter = new SpeechSynthesisUtterance("シェーシェー！");
+        utter.lang = 'zh-TW';
+        synth.speak(utter);
+        
+        setTimeout(() => refreshLane(index), 2000);
+    }
+
+    // Expose functions globally
+    window.startGame = startGame;
+    window.returnToTitle = returnToTitle;
+    window.startRecording = startRecording;
+    window.stopRecording = stopRecording;
+    window.refreshLane = refreshLane;
+    window.playModel = playModel;
+
+    if (recognition) {
+        recognition.onresult = (event) => {
+            let interim = "";
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) finalTranscript += event.results[i][0].transcript;
+                else interim += event.results[i][0].transcript;
+            }
+            speechLog.innerHTML = `「${finalTranscript + interim}」`;
+            speechLog.style.color = "#2d3436";
+        };
+        recognition.onend = () => {
+            isListening = false;
+            checkOrder(targetLane);
+        };
+        recognition.onerror = (event) => {
+             isListening = false;
+             const btn = document.getElementById(`micBtn${targetLane}`);
+             if(btn) {
+                 btn.classList.remove('listening');
+                 btn.innerHTML = '<i class="fa-solid fa-microphone-lines"></i> 押して喋る';
+             }
+             speechLog.innerText = "エラー: もう一度押して話してください";
+        };
+    }
+</script>
+</body>
+</html>
