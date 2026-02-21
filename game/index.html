@@ -366,6 +366,8 @@
     <!-- BGM & SE -->
     <audio id="bgm" loop src="material/bgm/cafe_music.mp3"></audio>
     <audio id="se-doorbell" src="material/se/doorbell.mp3"></audio>
+    <!-- ★正解用のSEを追加 -->
+    <audio id="se-success" src="material/se/success.mp3"></audio>
 
     <div id="title-screen" class="title-screen">
         <div class="title-logo">
@@ -644,6 +646,7 @@
     const synth = window.speechSynthesis;
     const bgm = document.getElementById('bgm'); 
     const doorbell = document.getElementById('se-doorbell');
+    const successSe = document.getElementById('se-success'); // ★追加: 正解SE要素の取得
 
     // --- EVENTS & RECORDING ---
     function startRecording(laneIndex, event) {
@@ -726,6 +729,12 @@
         document.getElementById(`stamp${index}`).classList.add('stamp-animate');
         document.getElementById(`earned${index}`).innerText = `+$${orders[index].price}`;
         document.getElementById(`earned${index}`).classList.add('show');
+        
+        // ★追加: 正解のSEを再生
+        if(successSe){
+            successSe.currentTime = 0;
+            successSe.play().catch(e => {});
+        }
         
         const utter = new SpeechSynthesisUtterance("謝謝！");
         utter.lang = 'zh-TW';
