@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DRINK STAND</title>
+    <title>下午茶時間</title>
     
     <!-- iOSでアプリとして全画面表示するための設定 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="DRINK STAND">
+    <meta name="apple-mobile-web-app-title" content="Afternoon tea time">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
@@ -185,16 +185,16 @@
             justify-content: center;
             align-items: center;
             margin-bottom: 20px;
-            height: 140px;
+            height: 160px; /* ★修正：アイコンに合わせて少し高さを出しました */
         }
         .customer-avatar {
-            width: 120px;
-            height: 120px;
+            width: 140px; /* ★修正：120px -> 140pxに大きくしました */
+            height: 140px; /* ★修正：120px -> 140pxに大きくしました */
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 60px;
+            font-size: 70px; /* ★修正：中のアイコンも大きくしました */
             background: #ffffff;
             border: 4px solid #ffffff;
             box-shadow: 0 8px 20px rgba(0,0,0,0.1);
@@ -357,7 +357,7 @@
         /* Footer */
         .footer { height: 30px; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #999; border-top: 1px solid #f0f0f0; }
         
-        /* ★追加：デバッグログ非表示用CSS */
+        /* デバッグログ非表示用CSS */
         #speechLog span, #speechLog b { display: none; }
     </style>
 </head>
@@ -366,7 +366,6 @@
     <!-- BGM & SE -->
     <audio id="bgm" loop src="material/bgm/cafe_music.mp3"></audio>
     <audio id="se-doorbell" src="material/se/doorbell.mp3"></audio>
-    <!-- ★正解用のSEを追加 -->
     <audio id="se-success" src="material/se/success.mp3"></audio>
 
     <div id="title-screen" class="title-screen">
@@ -499,7 +498,7 @@
     const MATCH_RULES = {
         '烏龍茶': ['烏龍', '烏隆', '汙龍', '嗚龍'],
         '紅茶':   ['紅茶', '宏茶', '鴻茶', '洪茶', '紅'], 
-        '綠茶':   ['綠茶', '綠', '律', '慮', '率', '呂'], 
+        '綠茶':   ['綠茶', '綠', '律', '慮', '率', '呂', '六甲'], 
         '咖啡':   ['咖啡', '咖', '卡', '喀'], 
         '水果茶': ['水果', '水', '誰', '睡', '稅'], 
         '珍珠':   ['珍珠', '珍', '真', '貞', '甄', '震', '珠', '豬', '諸', '朱', '針'],
@@ -552,7 +551,7 @@
     let targetLane = 0; 
     let finalTranscript = "";
     
-    // ★追加：クリア回数をカウントして難易度を調整する変数
+    // クリア回数をカウントして難易度を調整する変数
     let totalClearedCount = 0; 
 
     function generateRandomOrder() {
@@ -572,7 +571,7 @@
             price += (t.price || 10);
         });
 
-        // ★変更：12回クリアするまでは「砂糖」「氷」のカスタマイズを出さない
+        // 12回クリアするまでは「砂糖」「氷」のカスタマイズを出さない
         if (totalClearedCount >= 12) {
             if (Math.random() > 0.4) {
                  const selectedSugar = sugars[Math.floor(Math.random() * sugars.length)];
@@ -645,8 +644,12 @@
 
     const synth = window.speechSynthesis;
     const bgm = document.getElementById('bgm'); 
+    
+    // ★SEの取得と音量調整
     const doorbell = document.getElementById('se-doorbell');
-    const successSe = document.getElementById('se-success'); // ★追加: 正解SE要素の取得
+    if (doorbell) doorbell.volume = 0.3; // ドアベルの音量を小さめに設定
+    
+    const successSe = document.getElementById('se-success');
 
     // --- EVENTS & RECORDING ---
     function startRecording(laneIndex, event) {
@@ -684,13 +687,11 @@
         if (!finalTranscript) return;
 
         if (currentMode === 'super_easy') {
-             // document.getElementById('speechLog').innerHTML = `認識: 「${finalTranscript.substring(0, 10)}...」<br><span style="color:#2ecc71; font-weight:bold;">SUPER EASY: OK!</span>`;
              markCleared(laneIndex);
              return;
         }
 
         const cleanTranscript = normalizeText(finalTranscript);
-        // document.getElementById('speechLog').innerHTML = `認識: 「${finalTranscript.substring(0, 10)}...」<br><span style="color:#e67e22; font-weight:bold;">↓ 検出: ${cleanTranscript}</span>`;
 
         if (!cleared[laneIndex] && orders[laneIndex]) {
             const keywords = orders[laneIndex].keywords;
@@ -718,7 +719,7 @@
     function markCleared(index) {
         if (cleared[index]) return; 
         cleared[index] = true;
-        totalClearedCount++; // ★クリア回数をカウント
+        totalClearedCount++; 
 
         const btn = document.getElementById(`micBtn${index}`);
         btn.classList.remove('listening');
@@ -730,13 +731,11 @@
         document.getElementById(`earned${index}`).innerText = `+$${orders[index].price}`;
         document.getElementById(`earned${index}`).classList.add('show');
         
-        // ★追加: 正解のSEを再生
+        // 正解のSEを再生
         if(successSe){
             successSe.currentTime = 0;
             successSe.play().catch(e => {});
         }
-        
-        // 謝謝の読み上げを削除
         
         setTimeout(() => refreshLane(index), 2000);
     }
@@ -863,7 +862,7 @@
         btn.innerHTML = '<i class="fa-solid fa-microphone-lines"></i> 押して喋る';
         btn.classList.remove('listening');
 
-        // ★ドライバー出現率を10%に下げ、出現時は報酬を2倍にする
+        // ドライバー出現率を10%に下げ、出現時は報酬を2倍にする
         let cust;
         if (Math.random() < 0.1) {
             cust = CUSTOMERS.find(x => x.desc === 'ドライバー');
