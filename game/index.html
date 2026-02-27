@@ -636,7 +636,7 @@
              const btn = document.getElementById(`micBtn${targetLane}`);
              if(btn) {
                  btn.classList.remove('listening');
-                 btn.innerHTML = '<i class="fa-solid fa-microphone-lines"></i> 押して喋る';
+                 btn.innerHTML = '<i class="fa-solid fa-microphone-lines"></i> 注文を読み上げる';
              }
              document.getElementById('speechLog').innerText = "エラー: もう一度押して話してください";
         };
@@ -682,7 +682,7 @@
 
     function checkOrder(laneIndex) {
         const btn = document.getElementById(`micBtn${laneIndex}`);
-        if (!cleared[laneIndex]) btn.innerHTML = '<i class="fa-solid fa-microphone-lines"></i> 押して喋る';
+        if (!cleared[laneIndex]) btn.innerHTML = '<i class="fa-solid fa-microphone-lines"></i> 注文を読み上げる';
         
         if (!finalTranscript) return;
 
@@ -710,7 +710,7 @@
             } else {
                 btn.innerHTML = '<i class="fa-solid fa-xmark"></i> 違うかも';
                 setTimeout(() => {
-                    if(!cleared[laneIndex] && !isListening) btn.innerHTML = '<i class="fa-solid fa-microphone-lines"></i> 押して喋る';
+                    if(!cleared[laneIndex] && !isListening) btn.innerHTML = '<i class="fa-solid fa-microphone-lines"></i> 注文を読み上げる';
                 }, 1000);
             }
         }
@@ -859,7 +859,7 @@
         
         const btn = document.getElementById(`micBtn${laneIndex}`);
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-microphone-lines"></i> 押して喋る';
+        btn.innerHTML = '<i class="fa-solid fa-microphone-lines"></i> 注文を読み上げる';
         btn.classList.remove('listening');
 
         // ドライバー出現率を10%に下げ、出現時は報酬を2倍にする
